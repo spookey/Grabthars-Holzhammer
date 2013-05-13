@@ -60,9 +60,9 @@ class GCode(object):
                     if not firstseen:
                         result.append('M%d04 S%d' %(self._extruder, self._inittemp))
                         firstseen = True
-                        print '-- lnum %d altered %s°' %(ln, line)
+                        print(('-- lnum %d altered %s°' %(ln, line)))
                     elif int(line.split()[1].strip('S')) != 0:
-                        print '-- lnum %d killed %s°' %(ln, line)
+                        print(('-- lnum %d killed %s°' %(ln, line)))
                 else:
                     result.append(line)
             else:
@@ -73,8 +73,9 @@ class GCode(object):
         result = set()
         fz = self.getZofFirstObjectLayer()
         for ln, line in enumerate(self._gcode):
-            if self.getZfromLine(line) >= fz:
-                result.add(self.getZfromLine(line))
+            if self.getZfromLine(line):
+                if self.getZfromLine (line) >= fz:
+                    result.add(self.getZfromLine(line))
         return sorted(result)
 
     def getZstepfromZ(self, z):
@@ -126,24 +127,24 @@ class GCode(object):
         for z, lnum, sec in reversed(self.getListofZLnumandSecs()[lpos - span:lpos + 1]):
             if sec >= 2.0:
                 self._gcode.insert(lnum, 'M%d04 S%d' %(self._extruder, temp))
-                print '-- layer %s at lnum %d -> %d°' %(z, lnum, temp)
+                print(('-- layer %s at lnum %d -> %d°' %(z, lnum, temp)))
                 if targettemp >= starttemp:
                     temp -= 1
                 else:
                     temp += 1
-            else: print 'this should not happen'
+            else: print('this should not happen')
 
 
 def main():
     # ~> GCode(dateiname, extruder, start_temperatur)
     g = GCode('input.bfb', 1, 195)
-    # print 'INIT: %s Layers' %(len(g.getListofZ()))
-    # print 'getLnumfromZ(6.0) %s' %(g.getLnumfromZ(6.0))
-    # print 'getLumofFirstObjectLayer %s' %(g.getLnumofFirstObjectLayer())
-    # print 'getZofFirstObjectLayer %s' %(g.getZofFirstObjectLayer())
-    # print 'getZstepfromZ(6.0) %s' %(g.getZstepfromZ(6.0))
-    # print 'getZsteps %s' %(g.getZsteps())
-    # print 'getSecsforZ(6.0) %s' %(g.getSecsforZ(6.0))
+    # print(('INIT: %s Layers' %(len(g.getListofZ()))))
+    # print(('getLnumfromZ(6.0) %s' %(g.getLnumfromZ(6.0))))
+    # print(('getLumofFirstObjectLayer %s' %(g.getLnumofFirstObjectLayer())))
+    # print(('getZofFirstObjectLayer %s' %(g.getZofFirstObjectLayer())))
+    # print(('getZstepfromZ(6.0) %s' %(g.getZstepfromZ(6.0))))
+    # print(('getZsteps %s' %(g.getZsteps())))
+    # print(('getSecsforZ(6.0) %s' %(g.getSecsforZ(6.0))))
 
     # alte Temperaturwerte entfernen
     g.killAllTemps()
@@ -155,7 +156,7 @@ def main():
 
     # speichern
     g.dump()
-    print 'return 0;'
+    print('return 0;')
 
 if __name__ == '__main__':
     main()
