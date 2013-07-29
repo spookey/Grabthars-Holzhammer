@@ -115,6 +115,11 @@ class GCode(object):
     def getListofZLnumandSecs(self):
         return [(element, self.getLnumfromZ(element), self.getSecsforZ(element)) for element in self.getListofZ()]
 
+    def insertTempLine(self, lnum, temp, z, targettemp):
+        self._gcode.insert(lnum, 'M%d04 S%d' %(self._extruder, temp))
+        print(('-- layer %s at lnum %d -> temp %d°' %(z, lnum, temp)))
+        print(('-> cooling %d <= %d' %(temp, targettemp)) if temp <= targettemp else ('-> heating %d >= %d' %(temp, targettemp)))
+
     def cycleHeatuntilZ(self, targetz, starttemp, targettemp):
         span = getDifference(starttemp, targettemp)
         if targettemp == starttemp:
@@ -125,34 +130,47 @@ class GCode(object):
             temp = targettemp
         lpos = self.getListofZ().index(targetz)
         for z, lnum, sec in reversed(self.getListofZLnumandSecs()[lpos - span:lpos + 1]):
-            if sec >= 2.0:
-                self._gcode.insert(lnum, 'M%d04 S%d' %(self._extruder, temp))
-                print(('-- layer %s at lnum %d -> %d°' %(z, lnum, temp)))
-                if targettemp >= starttemp:
-                    temp -= 1
-                else:
+            print('-- lnum: %d -- Z: %d -- sec: %d' %(lnum, z, sec))
+            if sec >= 1.25:
+                if starttemp >= targettemp:
+                    self.insertTempLine(lnum, temp, z, targettemp)
                     temp += 1
+            if sec >= 2.0:
+                if starttemp <= targettemp:
+                    self.insertTempLine(lnum, temp, z, targettemp)
+                    temp -= 1
             else: print('this should not happen')
 
 
 def main():
     # ~> GCode(dateiname, extruder, start_temperatur)
-    g = GCode('input.bfb', 1, 195)
-    # print(('INIT: %s Layers' %(len(g.getListofZ()))))
-    # print(('getLnumfromZ(6.0) %s' %(g.getLnumfromZ(6.0))))
-    # print(('getLumofFirstObjectLayer %s' %(g.getLnumofFirstObjectLayer())))
-    # print(('getZofFirstObjectLayer %s' %(g.getZofFirstObjectLayer())))
-    # print(('getZstepfromZ(6.0) %s' %(g.getZstepfromZ(6.0))))
-    # print(('getZsteps %s' %(g.getZsteps())))
-    # print(('getSecsforZ(6.0) %s' %(g.getSecsforZ(6.0))))
+    g = GCode('kirche18sps-laywood-rft-singletemp.bfb', 1, 220)
+    print(('INIT: %s Layers' %(len(g.getListofZ()))))
+    print(('getLnumfromZ(6.0) %s' %(g.getLnumfromZ(6.0))))
+    print(('getLumofFirstObjectLayer %s' %(g.getLnumofFirstObjectLayer())))
+    print(('getZofFirstObjectLayer %s' %(g.getZofFirstObjectLayer())))
+    print(('getZstepfromZ(6.0) %s' %(g.getZstepfromZ(6.0))))
+    print(('getZsteps %s' %(g.getZsteps())))
+    print(('getSecsforZ(6.0) %s' %(g.getSecsforZ(6.0))))
+    print(g.getListofZ())
 
     # alte Temperaturwerte entfernen
     g.killAllTemps()
+    print('-- temps killed')
 
     # Verläufe setzen ~> cycleHeatuntilZ(layer, start_temperatur, ziel_temperatur)
-    g.cycleHeatuntilZ(6.0, 195, 199)
 
-    g.cycleHeatuntilZ(11.0, 199, 190)
+    g.cycleHeatuntilZ(7.5, 220, 245)
+    print('-- 7.5')
+
+    g.cycleHeatuntilZ(14.5, 245, 180)
+    print('-- 14.5')
+
+    g.cycleHeatuntilZ(31.0, 180, 245)
+    print('-- 31.0')
+
+    g.cycleHeatuntilZ(31.25, 245, 180)
+    print('-- 31.25')
 
     # speichern
     g.dump()
